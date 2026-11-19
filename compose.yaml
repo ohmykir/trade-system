@@ -1,0 +1,35 @@
+services:
+  trade-system:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trade-system-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://trade-system-db:5432/${DB_NAME:-tradesystem}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "8081:8080"
+    depends_on:
+      trade-system-db:
+        condition: service_healthy
+
+  trade-system-db:
+    image: 'postgres:15-alpine'
+    container_name: trade-system-db
+    environment:
+      - 'POSTGRES_DB=${DB_NAME:-tradesystem}'
+      - 'POSTGRES_USER=${DB_USER:-postgres}'
+      - 'POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}'
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-tradesystem}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
